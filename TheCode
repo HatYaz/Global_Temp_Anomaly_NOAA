@@ -1,0 +1,54 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Aug 27 18:30:46 2024
+https://www.ncei.noaa.gov/access/monitoring/global-temperature-anomalies/
+
+
+@author: Hatem Yazidi
+"""
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from io import StringIO
+import requests
+
+# Download data from NOAA
+url = "https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/global/time-series/globe/land_ocean/ann/1/1880-2023.csv"
+response = requests.get(url)
+data = StringIO(response.text)
+
+# Read the CSV data
+df = pd.read_csv(data, skiprows=4)
+
+# Convert 'Year' to datetime and set as index
+df['Year'] = pd.to_datetime(df['Year'], format='%Y')
+df.set_index('Year', inplace=True)
+
+# Calculate 5-year moving average
+df['5-Year MA'] = df['Anomaly'].rolling(window=5).mean()
+
+# Create the plot
+plt.figure(figsize=(12, 6))
+plt.plot(df.index, df['Anomaly'], label='Annual Average')
+plt.plot(df.index, df['5-Year MA'], label='5-Year Moving Average', color='red')
+
+plt.title('Yearloy Global Land and Ocean Temperature Anomalies - relative to 1901-2000')
+plt.xlabel('Year')
+plt.ylabel('Temperature Anomaly (°C)')
+plt.legend()
+plt.grid(True)
+
+# Save the plot
+plt.savefig('global_temperature_trend_1.png')
+plt.close()
+
+print("Analysis complete. The plot has been saved as 'global_temperature_trend.png'.")
+
+# Calculate and print some basic statistics
+mean_anomaly = df['Anomaly'].mean()
+max_anomaly = df['Anomaly'].max()
+max_year = df['Anomaly'].idxmax().year
+
+print("\nSummary Statistics:")
+print(f"Mean temperature anomaly: {mean_anomaly:.2f}°C")
+print(f"Maximum temperature anomaly: {max_anomaly:.2f}°C in {max_year}")
